@@ -1,0 +1,84 @@
+---
+interface Props {
+  error: string;
+}
+
+const { error } = Astro.props;
+---
+
+<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+  <div class="bg-red-50 border-2 border-red-200 rounded-lg p-8">
+    <div class="flex items-start">
+      <div class="flex-shrink-0">
+        <svg
+          class="h-6 w-6 text-red-600"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+          />
+        </svg>
+      </div>
+      <div class="ml-4 flex-1">
+        <h2 class="text-xl font-bold text-red-900 mb-4">
+          ⚠️ Error de Configuración
+        </h2>
+        <div class="text-red-800 mb-6 whitespace-pre-line font-mono text-sm bg-red-100 p-4 rounded border border-red-300">
+          {error}
+        </div>
+        <div class="bg-white rounded-lg p-6 border border-red-200">
+          <h3 class="font-semibold text-gray-900 mb-3">🔧 Cómo solucionarlo:</h3>
+          <ol class="list-decimal list-inside space-y-2 text-gray-700">
+            <li>
+              Ve a{" "}
+              <a
+                href="https://vercel.com/dashboard"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="text-blue-600 hover:text-blue-700 underline font-semibold"
+              >
+                Vercel Dashboard
+              </a>
+            </li>
+            <li>Selecciona tu proyecto</li>
+            <li>Ve a <strong>Settings</strong> → <strong>Environment Variables</strong></li>
+            <li>
+              Agrega las variables requeridas:
+              <ul class="list-disc list-inside ml-6 mt-2 space-y-1">
+                <li><code class="bg-gray-100 px-2 py-1 rounded">PUBLIC_SUPABASE_URL</code></li>
+                <li><code class="bg-gray-100 px-2 py-1 rounded">PUBLIC_SUPABASE_ANON_KEY</code></li>
+              </ul>
+            </li>
+            <li>
+              Obtén los valores desde{" "}
+              <a
+                href="https://supabase.com/dashboard"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="text-blue-600 hover:text-blue-700 underline font-semibold"
+              >
+                Supabase Dashboard
+              </a>
+              {" "}→ Project Settings → API
+            </li>
+            <li>
+              <strong>Importante:</strong> Después de agregar las variables, haz un{" "}
+              <strong>Redeploy</strong> del proyecto
+            </li>
+          </ol>
+        </div>
+        <div class="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+          <p class="text-sm text-blue-800">
+            <strong>💡 Tip:</strong> Para más información sobre debugging, consulta{" "}
+            <code class="bg-blue-100 px-2 py-1 rounded text-xs">SUPABASE_DEBUGGING.md</code>
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -12,7 +12,8 @@
     "build": "npm run build --workspace=apps/web",
     "db:migrate": "supabase migration up",
     "db:seed": "tsx supabase/seed/index.ts",
-    "db:reset": "supabase db reset"
+    "db:reset": "supabase db reset",
+    "verify:env": "node scripts/verify-env.js"
   },
   "devDependencies": {
     "@types/node": "^20.10.0",

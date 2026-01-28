@@ -1,7 +1,7 @@
 import type { SearchEngine, SearchEngineConfig } from "./types.js";
 import { PostgresFTSEngineSimple } from "./postgres-fts-simple.js";
 import { MeilisearchEngine } from "./meilisearch.js";
-import { SEARCH_ENGINES } from "@qregalo/shared/constants.js";
+import { SEARCH_ENGINES } from "@qregalo/shared";
 
 export function createSearchEngine(
   engineName?: string,

@@ -2,7 +2,7 @@ import type { AIProvider } from "./types.js";
 import { OpenAIProvider } from "./openai-provider.js";
 import { DeepSeekProvider } from "./deepseek-provider.js";
 import { LocalProvider } from "./local-provider.js";
-import { AI_PROVIDERS } from "@qregalo/shared/constants.js";
+import { AI_PROVIDERS } from "@qregalo/shared";
 
 export function createAIProvider(providerName?: string): AIProvider {
   const provider = providerName || process.env.LLM_PROVIDER || AI_PROVIDERS.OPENAI;

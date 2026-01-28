@@ -4,14 +4,9 @@ import { createQregaloClient } from "@qregalo/api-client";
 import { getEstimatedPriceUSD, getEstimatedPriceUYU } from "@qregalo/domain";
 import { formatPrice } from "@qregalo/shared";
 import { AnalyticsTracker } from "@qregalo/analytics";
+import { getSupabaseConfig } from "../utils/env";
 
-const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL;
-const supabaseKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY;
-
-if (!supabaseUrl || !supabaseKey) {
-  throw new Error("Supabase credentials not configured");
-}
-
+const { url: supabaseUrl, anonKey: supabaseKey } = getSupabaseConfig();
 const client = createQregaloClient({ url: supabaseUrl, anonKey: supabaseKey });
 const tracker = new AnalyticsTracker(client);
 
@@ -165,27 +160,36 @@ const estimatedUYU = product ? getEstimatedPriceUYU(product) : null;
       const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL;
       const supabaseKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY;
 
-      if (supabaseUrl && supabaseKey) {
-        try {
-          await fetch(`${supabaseUrl}/rest/v1/product_clicks`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${supabaseKey}`,
-              apikey: supabaseKey,
-              Prefer: "return=minimal",
-            },
-            body: JSON.stringify({
-              session_id: sessionId,
-              product_id: productId,
-              store_id: storeId,
-              user_agent: navigator.userAgent,
-              referrer: document.referrer || null,
-            }),
-          });
-        } catch (error) {
-          console.error("Error tracking click:", error);
-        }
+      if (!supabaseUrl || !supabaseKey) {
+        console.warn(
+          "Supabase credentials not configured. Click tracking disabled.\n" +
+          "Please configure PUBLIC_SUPABASE_URL and PUBLIC_SUPABASE_ANON_KEY in Vercel."
+        );
+        // Still open the store URL even if tracking fails
+        window.open(button.href, "_blank");
+        return;
+      }
+
+      try {
+        await fetch(`${supabaseUrl}/rest/v1/product_clicks`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${supabaseKey}`,
+            apikey: supabaseKey,
+            Prefer: "return=minimal",
+          },
+          body: JSON.stringify({
+            session_id: sessionId,
+            product_id: productId,
+            store_id: storeId,
+            user_agent: navigator.userAgent,
+            referrer: document.referrer || null,
+          }),
+        });
+      } catch (error) {
+        console.error("Error tracking click:", error);
+        // Still open the store URL even if tracking fails
       }
 
       // Open store URL

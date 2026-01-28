@@ -5,16 +5,13 @@ import { createQregaloClient } from "@qregalo/api-client";
 import { createAIProvider } from "@qregalo/ai";
 import { mapParseResultToSearchRequest } from "@qregalo/domain";
 import { AnalyticsTracker } from "@qregalo/analytics";
+import { AI_PROVIDERS } from "@qregalo/shared";
+import { getSupabaseConfig } from "../utils/env";
 
-const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL;
-const supabaseKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY;
-
-if (!supabaseUrl || !supabaseKey) {
-  throw new Error("Supabase credentials not configured");
-}
-
+const { url: supabaseUrl, anonKey: supabaseKey } = getSupabaseConfig();
 const client = createQregaloClient({ url: supabaseUrl, anonKey: supabaseKey });
 const tracker = new AnalyticsTracker(client);
+const localAIProvider = createAIProvider(AI_PROVIDERS.LOCAL);
 
 const query = Astro.url.searchParams.get("q") || "";
 let products = [];
@@ -23,22 +20,33 @@ let error = null;
 
 if (query) {
   try {
-    // Call AI parse edge function
-    const aiParseUrl = `${supabaseUrl}/functions/v1/ai-parse`;
-    const parseResponse = await fetch(aiParseUrl, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${supabaseKey}`,
-      },
-      body: JSON.stringify({ query }),
-    });
+    let parseResult;
+    
+    // Try to call AI parse edge function first
+    try {
+      const aiParseUrl = `${supabaseUrl}/functions/v1/ai-parse`;
+      const parseResponse = await fetch(aiParseUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${supabaseKey}`,
+          apikey: supabaseKey,
+        },
+        body: JSON.stringify({ query }),
+      });
 
-    if (!parseResponse.ok) {
-      throw new Error(`AI parse failed: ${parseResponse.statusText}`);
+      if (parseResponse.ok) {
+        parseResult = await parseResponse.json();
+      } else {
+        // If edge function fails, use local fallback
+        console.warn(`Edge function unavailable (${parseResponse.status}), using local parser`);
+        parseResult = await localAIProvider.parseGiftQuery(query);
+      }
+    } catch (fetchError) {
+      // If fetch fails (network error, function not deployed, etc.), use local fallback
+      console.warn("Edge function not available, using local parser:", fetchError);
+      parseResult = await localAIProvider.parseGiftQuery(query);
     }
-
-    const parseResult = await parseResponse.json();
 
     // Map to search request
     const searchRequest = mapParseResultToSearchRequest(parseResult);
