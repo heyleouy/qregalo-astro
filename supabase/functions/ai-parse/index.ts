@@ -54,14 +54,76 @@ function checkRateLimit(ip: string): boolean {
   return true;
 }
 
+// Spanish stopwords that are not relevant for product search
+const SPANISH_STOPWORDS = new Set([
+  "tengo", "tiene", "tienen", "tener", "tenemos",
+  "soy", "es", "son", "ser", "somos",
+  "estoy", "está", "están", "estar", "estamos",
+  "hacer", "hace", "hacen", "hago", "hacemos",
+  "dar", "doy", "da", "dan", "damos",
+  "ver", "veo", "ve", "ven", "vemos",
+  "saber", "sé", "sabe", "saben", "sabemos",
+  "querer", "quiero", "quiere", "quieren", "queremos",
+  "poder", "puedo", "puede", "pueden", "podemos",
+  "decir", "digo", "dice", "dicen", "decimos",
+  "ir", "voy", "va", "van", "vamos",
+  "yo", "tú", "él", "ella", "nosotros", "nosotras", "ustedes", "ellos", "ellas",
+  "me", "te", "le", "nos", "les",
+  "mi", "mis", "tu", "tus", "su", "sus",
+  "que", "qué", "cual", "cuál", "como", "cómo", "cuando", "cuándo", "donde", "dónde",
+  "un", "una", "unos", "unas", "el", "la", "los", "las",
+  "de", "del", "al", "a", "en", "con", "por", "para", "sin", "sobre",
+  "y", "o", "pero", "mas", "más", "menos", "muy", "mucho", "muchos", "muchas",
+  "años", "año", "mes", "meses", "día", "días",
+  "no", "sí", "si", "también", "tampoco", "solo", "sólo", "solamente",
+  "apasiona", "apasionan", "gusta", "gustan", "encanta", "encantan",
+  "regalarle", "regalar", "regalo", "regalos", "regalarles",
+  "busco", "busca", "buscan", "buscamos", "encontrar",
+]);
+
+const PRODUCT_RELEVANT_WORDS = new Set([
+  "anime", "manga", "tecnologia", "tecnología", "tech", "electronico", "electrónico",
+  "smartphone", "laptop", "tablet", "computadora", "pc",
+  "ropa", "vestido", "camisa", "pantalon", "pantalón", "zapatos",
+  "libro", "libros", "lectura", "novela",
+  "deporte", "deportes", "futbol", "fútbol", "gym", "ejercicio", "running",
+  "hogar", "cocina", "decoracion", "decoración", "mueble", "muebles",
+  "juguete", "juguetes", "toy", "niño", "niña", "niños", "niñas",
+  "belleza", "cosmetico", "cosmético", "perfume", "maquillaje",
+  "accesorio", "accesorios", "reloj", "bolso", "cartera",
+]);
+
+function filterRelevantKeywords(keywords: string[]): string[] {
+  return keywords
+    .map((kw) => kw.toLowerCase().trim())
+    .filter((kw) => {
+      if (PRODUCT_RELEVANT_WORDS.has(kw)) return true;
+      if (SPANISH_STOPWORDS.has(kw)) return false;
+      if (kw.length <= 3) return false;
+      return true;
+    });
+}
+
 // Fallback heuristic parser
 function fallbackParse(query: string): ParseResult {
   const lowerQuery = query.toLowerCase();
 
-  const keywords = query
+  // Extract and filter relevant keywords
+  const words = query
+    .toLowerCase()
+    .split(/\s+/)
+    .map((w) => w.replace(/[.,!?;:()\[\]{}'"]/g, "").trim())
+    .filter((w) => w.length > 0);
+  
+  const relevantKeywords = filterRelevantKeywords(words);
+  
+  // Fallback to original extraction if no relevant keywords
+  const fallbackKeywords = query
     .split(/\s+/)
     .filter((word) => word.length > 3)
     .slice(0, 10);
+  
+  const keywords = relevantKeywords.length > 0 ? relevantKeywords : fallbackKeywords;
 
   const categories: string[] = [];
   const categoryKeywords: Record<string, string[]> = {

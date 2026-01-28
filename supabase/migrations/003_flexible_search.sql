@@ -1,4 +1,8 @@
--- Function to search products with categories, price range, and full-text search
+-- Make search more flexible: when categories are present, keywords are optional
+-- This allows searches like "anime y tecnologia" to return technology products
+-- even if they don't contain "anime" in their content
+
+-- Update the search function to make keywords optional when categories are present
 CREATE OR REPLACE FUNCTION public.search_products_with_categories(
   search_query TEXT DEFAULT NULL,
   category_names TEXT[] DEFAULT NULL,
@@ -27,19 +31,10 @@ RETURNS TABLE (
 DECLARE
   tsquery_term TSQUERY;
 BEGIN
-  -- Build tsquery from search_query if provided
-  -- If categories are present, make keywords optional (use OR logic)
-  -- Otherwise use AND for more precise matching
-  IF search_query IS NOT NULL AND search_query != '' THEN
-    -- If we have categories, keywords are optional (they enhance but don't restrict)
-    -- So we use plainto_tsquery which will match any of the terms
-    IF category_names IS NOT NULL AND array_length(category_names, 1) > 0 THEN
-      -- With categories, use OR logic - match any keyword
-      tsquery_term := plainto_tsquery('spanish', search_query);
-    ELSE
-      -- Without categories, use AND logic for precise matching
-      tsquery_term := plainto_tsquery('spanish', search_query);
-    END IF;
+  -- Build tsquery from search_query if provided and not empty
+  -- Trim whitespace to handle empty strings
+  IF search_query IS NOT NULL AND trim(search_query) != '' THEN
+    tsquery_term := plainto_tsquery('spanish', trim(search_query));
   ELSE
     tsquery_term := to_tsquery('spanish', '');
   END IF;

@@ -1,4 +1,6 @@
--- Function to search products with categories, price range, and full-text search
+-- Fix keyword filtering in search function
+-- Handle empty strings properly and ensure keywords are optional when categories are present
+
 CREATE OR REPLACE FUNCTION public.search_products_with_categories(
   search_query TEXT DEFAULT NULL,
   category_names TEXT[] DEFAULT NULL,
@@ -27,19 +29,10 @@ RETURNS TABLE (
 DECLARE
   tsquery_term TSQUERY;
 BEGIN
-  -- Build tsquery from search_query if provided
-  -- If categories are present, make keywords optional (use OR logic)
-  -- Otherwise use AND for more precise matching
-  IF search_query IS NOT NULL AND search_query != '' THEN
-    -- If we have categories, keywords are optional (they enhance but don't restrict)
-    -- So we use plainto_tsquery which will match any of the terms
-    IF category_names IS NOT NULL AND array_length(category_names, 1) > 0 THEN
-      -- With categories, use OR logic - match any keyword
-      tsquery_term := plainto_tsquery('spanish', search_query);
-    ELSE
-      -- Without categories, use AND logic for precise matching
-      tsquery_term := plainto_tsquery('spanish', search_query);
-    END IF;
+  -- Build tsquery from search_query if provided and not empty
+  -- Trim whitespace to handle empty strings
+  IF search_query IS NOT NULL AND trim(search_query) != '' THEN
+    tsquery_term := plainto_tsquery('spanish', trim(search_query));
   ELSE
     tsquery_term := to_tsquery('spanish', '');
   END IF;
@@ -83,7 +76,7 @@ BEGIN
       (category_names IS NOT NULL AND array_length(category_names, 1) > 0)
       -- If no categories, keywords must match (or no search query)
       OR search_query IS NULL 
-      OR search_query = ''
+      OR trim(search_query) = ''
       OR p.search_text @@ tsquery_term
     )
     -- Price range filter
@@ -93,7 +86,7 @@ BEGIN
     -- Rank by relevance if search query exists
     -- When categories are present, keywords boost ranking but don't filter
     CASE 
-      WHEN search_query IS NOT NULL AND search_query != '' 
+      WHEN search_query IS NOT NULL AND trim(search_query) != '' 
       THEN ts_rank(p.search_text, tsquery_term)
       ELSE 0
     END DESC,

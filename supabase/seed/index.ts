@@ -1,8 +1,18 @@
 import { createClient } from "@supabase/supabase-js";
 import { execSync } from "child_process";
 
-// Get Supabase keys from status command
+// Get Supabase keys from status command or environment variables
 function getSupabaseKeys() {
+  // If environment variables are set (for production), use them directly
+  if (process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    return {
+      url: process.env.SUPABASE_URL,
+      serviceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY,
+      anonKey: process.env.SUPABASE_ANON_KEY || "",
+    };
+  }
+
+  // Otherwise, try to get from local supabase status
   try {
     const statusOutput = execSync("supabase status", {
       encoding: "utf-8",

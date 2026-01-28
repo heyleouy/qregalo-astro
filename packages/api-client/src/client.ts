@@ -67,7 +67,14 @@ export class QregaloClient {
     const limit = request.limit || 20;
     const offset = request.offset || 0;
 
-    // Build search query
+    // When categories are present, keywords are optional (for ranking only)
+    // Only pass relevant keywords to the RPC function
+    // When no categories, keywords are required for filtering
+    const hasCategories = request.categories.length > 0;
+    const hasKeywords = request.keywords.length > 0;
+    
+    // Build search query for direct queries (when no categories)
+    // Use AND for precise matching when no categories
     const searchTerms = request.keywords.join(" & ");
 
     // Build base query
@@ -75,8 +82,8 @@ export class QregaloClient {
       .from("products")
       .select("*", { count: "exact" });
 
-    // Full-text search
-    if (request.keywords.length > 0) {
+    // Full-text search (only when no categories, or for fallback)
+    if (hasKeywords && !hasCategories) {
       query = query.textSearch("search_text", searchTerms, {
         type: "websearch",
         config: "spanish",
@@ -84,10 +91,14 @@ export class QregaloClient {
     }
 
     // Category filter via RPC or subquery
-    if (request.categories.length > 0) {
+    if (hasCategories) {
+      // When categories are present, keywords are optional (for ranking only)
+      // Pass null or empty string if no relevant keywords, so RPC only filters by category
+      const searchQueryForRPC = hasKeywords ? request.keywords.join(" ") : null;
+      
       // Try to use RPC function for category filtering (if available)
       const rpcResult = await this.supabase.rpc("search_products_with_categories", {
-        search_query: searchTerms || null,
+        search_query: searchQueryForRPC,
         category_names: request.categories,
         price_min: request.price_range?.min ?? null,
         price_max: request.price_range?.max ?? null,
@@ -98,11 +109,13 @@ export class QregaloClient {
       // If RPC function exists and works, use it
       if (!rpcResult.error && rpcResult.data) {
         // Get total count using a separate query with same filters
+        // When categories are present, keywords are optional (don't filter by them)
         let countQuery = this.supabase
           .from("products")
           .select("*", { count: "exact", head: true });
 
-        if (request.keywords.length > 0) {
+        // Only apply keyword filter if no categories (keywords are required when no categories)
+        if (hasKeywords && !hasCategories) {
           countQuery = countQuery.textSearch("search_text", searchTerms, {
             type: "websearch",
             config: "spanish",

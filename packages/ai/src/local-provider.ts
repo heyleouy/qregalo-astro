@@ -1,16 +1,22 @@
 import type { AIProvider } from "./types.js";
 import type { ParseResult } from "@qregalo/shared";
+import { extractRelevantKeywords } from "@qregalo/domain/keyword-filter";
 
 export class LocalProvider implements AIProvider {
   async parseGiftQuery(query: string): Promise<ParseResult> {
     // Fallback heuristic parser
     const lowerQuery = query.toLowerCase();
 
-    // Extract keywords (simple word extraction)
-    const keywords = query
+    // Extract relevant keywords (filter out stopwords)
+    const keywords = extractRelevantKeywords(query).slice(0, 10);
+    
+    // Fallback: if no relevant keywords found, use original extraction
+    const fallbackKeywords = query
       .split(/\s+/)
       .filter((word) => word.length > 3)
       .slice(0, 10);
+    
+    const finalKeywords = keywords.length > 0 ? keywords : fallbackKeywords;
 
     // Simple category detection
     const categories: string[] = [];
@@ -46,7 +52,7 @@ export class LocalProvider implements AIProvider {
 
     return {
       intent: "gift_search",
-      keywords: keywords.length > 0 ? keywords : [query],
+      keywords: finalKeywords.length > 0 ? finalKeywords : [query],
       categories: categories.length > 0 ? categories : [],
       price_range: priceRange,
       age_range: ageRange,
