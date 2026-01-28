@@ -3,7 +3,10 @@
   "outputDirectory": "apps/web/dist",
   "framework": "astro",
   "functions": {
-    ".vercel/output/functions/_render.mjs": {
+    "apps/web/.vercel/output/functions/_render.mjs": {
+      "runtime": "nodejs20.x"
+    },
+    "apps/web/.vercel/output/functions/**/*.mjs": {
       "runtime": "nodejs20.x"
     }
   },
