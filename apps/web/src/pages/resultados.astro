@@ -1,0 +1,109 @@
+---
+import Layout from "../layouts/Layout.astro";
+import ProductCard from "../components/ProductCard";
+import { createQregaloClient } from "@qregalo/api-client";
+import { createAIProvider } from "@qregalo/ai";
+import { mapParseResultToSearchRequest } from "@qregalo/domain";
+import { AnalyticsTracker } from "@qregalo/analytics";
+
+const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL;
+const supabaseKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY;
+
+if (!supabaseUrl || !supabaseKey) {
+  throw new Error("Supabase credentials not configured");
+}
+
+const client = createQregaloClient({ url: supabaseUrl, anonKey: supabaseKey });
+const tracker = new AnalyticsTracker(client);
+
+const query = Astro.url.searchParams.get("q") || "";
+let products = [];
+let sessionId = "";
+let error = null;
+
+if (query) {
+  try {
+    // Call AI parse edge function
+    const aiParseUrl = `${supabaseUrl}/functions/v1/ai-parse`;
+    const parseResponse = await fetch(aiParseUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${supabaseKey}`,
+      },
+      body: JSON.stringify({ query }),
+    });
+
+    if (!parseResponse.ok) {
+      throw new Error(`AI parse failed: ${parseResponse.statusText}`);
+    }
+
+    const parseResult = await parseResponse.json();
+
+    // Map to search request
+    const searchRequest = mapParseResultToSearchRequest(parseResult);
+
+    // Search products
+    const searchResponse = await client.searchProducts(searchRequest);
+    products = searchResponse.products;
+
+    // Track search
+    sessionId = await tracker.trackSearch(query, parseResult, products.length);
+  } catch (e) {
+    error = e instanceof Error ? e.message : "Error desconocido";
+    console.error("Search error:", e);
+  }
+}
+---
+
+<Layout title="Resultados de búsqueda - QueRegalo Catalog">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    {query && (
+      <div class="mb-6">
+        <p class="text-sm text-gray-600 mb-2">Buscaste:</p>
+        <p class="text-lg font-semibold text-gray-900">"{query}"</p>
+      </div>
+    )}
+
+    {error && (
+      <div class="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+        <p class="text-red-800">Error: {error}</p>
+      </div>
+    )}
+
+    {!query && (
+      <div class="text-center py-12">
+        <p class="text-gray-600 mb-4">Ingresa una búsqueda para ver resultados</p>
+        <a href="/" class="text-blue-600 hover:text-blue-700 underline">
+          Volver al inicio
+        </a>
+      </div>
+    )}
+
+    {query && !error && products.length === 0 && (
+      <div class="text-center py-12">
+        <p class="text-gray-600 mb-4">No se encontraron productos</p>
+        <a href="/" class="text-blue-600 hover:text-blue-700 underline">
+          Intentar otra búsqueda
+        </a>
+      </div>
+    )}
+
+    {products.length > 0 && (
+      <div>
+        <p class="text-sm text-gray-600 mb-6">
+          Se encontraron {products.length} producto{products.length !== 1 ? "s" : ""}
+        </p>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {products.map((product) => (
+            <ProductCard
+              product={product}
+              sessionId={sessionId}
+              client:load
+            />
+          ))}
+        </div>
+      </div>
+    )}
+  </div>
+</Layout>

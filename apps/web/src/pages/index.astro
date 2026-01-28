@@ -1,0 +1,20 @@
+---
+import Layout from "../layouts/Layout.astro";
+import SearchForm from "../components/SearchForm";
+
+---
+
+<Layout title="QueRegalo Catalog - Descubre el regalo perfecto">
+  <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <div class="text-center mb-12">
+      <h2 class="text-4xl font-bold text-gray-900 mb-4">
+        ¿Qué regalar?
+      </h2>
+      <p class="text-xl text-gray-600 mb-8">
+        Describe a la persona y nuestra IA encontrará el regalo perfecto
+      </p>
+    </div>
+
+    <SearchForm client:load />
+  </div>
+</Layout>

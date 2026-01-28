@@ -1,0 +1,28 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "lib": ["ES2022"],
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "allowJs": true,
+    "checkJs": false,
+    "strict": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "isolatedModules": true,
+    "baseUrl": ".",
+    "paths": {
+      "@qregalo/shared": ["./packages/shared/src"],
+      "@qregalo/domain": ["./packages/domain/src"],
+      "@qregalo/api-client": ["./packages/api-client/src"],
+      "@qregalo/search": ["./packages/search/src"],
+      "@qregalo/ai": ["./packages/ai/src"],
+      "@qregalo/analytics": ["./packages/analytics/src"]
+    }
+  },
+  "include": ["**/*.ts", "**/*.tsx"],
+  "exclude": ["node_modules", "dist", ".astro"]
+}

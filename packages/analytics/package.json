@@ -1,0 +1,15 @@
+{
+  "name": "@qregalo/analytics",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "dependencies": {
+    "@qregalo/shared": "*",
+    "@qregalo/api-client": "*"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "typescript": "^5.3.3"
+  }
+}

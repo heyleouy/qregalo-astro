@@ -1,0 +1,31 @@
+{
+  "name": "@qregalo/web",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "astro dev",
+    "start": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "astro": "astro"
+  },
+  "dependencies": {
+    "@astrojs/react": "^3.3.1",
+    "@astrojs/tailwind": "^5.1.0",
+    "@qregalo/shared": "*",
+    "@qregalo/domain": "*",
+    "@qregalo/api-client": "*",
+    "@qregalo/analytics": "*",
+    "@supabase/supabase-js": "^2.39.0",
+    "astro": "^4.5.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "tailwindcss": "^3.4.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "@types/react": "^18.2.48",
+    "@types/react-dom": "^18.2.18",
+    "typescript": "^5.3.3"
+  }
+}

@@ -1,0 +1,41 @@
+---
+interface Props {
+  title?: string;
+}
+
+const { title = "QueRegalo Catalog" } = Astro.props;
+---
+
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="description" content="Descubre el regalo perfecto con IA" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="generator" content={Astro.generator} />
+    <title>{title}</title>
+  </head>
+  <body class="bg-gray-50 min-h-screen">
+    <header class="bg-white shadow-sm">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+        <div class="flex items-center justify-between">
+          <a href="/" class="flex items-center space-x-2">
+            <span class="text-2xl">🎁</span>
+            <h1 class="text-xl font-bold text-gray-900">QueRegalo Catalog</h1>
+          </a>
+        </div>
+      </div>
+    </header>
+    <main>
+      <slot />
+    </main>
+    <footer class="bg-white border-t mt-12">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <p class="text-center text-sm text-gray-500">
+          © 2024 QueRegalo Catalog - Descubre el regalo perfecto con IA
+        </p>
+      </div>
+    </footer>
+  </body>
+</html>
