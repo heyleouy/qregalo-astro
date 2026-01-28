@@ -1,6 +1,6 @@
 import type { AIProvider } from "./types.js";
 import type { ParseResult } from "@qregalo/shared";
-import { extractRelevantKeywords } from "@qregalo/domain/keyword-filter";
+import { extractRelevantKeywords } from "@qregalo/domain";
 
 export class LocalProvider implements AIProvider {
   async parseGiftQuery(query: string): Promise<ParseResult> {
