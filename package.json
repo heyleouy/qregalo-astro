@@ -11,6 +11,7 @@
     "dev": "npm run dev --workspace=apps/web",
     "build": "npm run build --workspace=apps/web",
     "build:vercel": "cd apps/web && npm run build",
+    "install:vercel": "npm install && npm install @rollup/rollup-linux-x64-gnu@4.57.0 --workspace=@qregalo/web --save-dev || true",
     "db:migrate": "supabase migration up",
     "db:seed": "tsx supabase/seed/index.ts",
     "db:reset": "supabase db reset",
