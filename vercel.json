@@ -1,7 +1,7 @@
 {
   "buildCommand": "npm run build --workspace=@qregalo/web",
   "outputDirectory": "apps/web/dist",
-  "installCommand": "bash scripts/vercel-install.sh",
+  "installCommand": "npm install && (npm install @rollup/rollup-linux-x64-gnu@^4.57.0 --workspace=@qregalo/web --save-dev || true)",
   "framework": "astro",
   "rewrites": [
     {
