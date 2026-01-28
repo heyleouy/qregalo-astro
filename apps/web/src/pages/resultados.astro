@@ -18,9 +18,28 @@ let products = [];
 let sessionId = "";
 let error = null;
 
+// Helper to check if error is a Supabase connection error
+function isSupabaseConnectionError(error: any): boolean {
+  if (!error) return false;
+  const message = (error.message || error.toString() || "").toLowerCase();
+  const code = error.code || "";
+  
+  return (
+    message.includes("could not translate host name") ||
+    message.includes("name or service not known") ||
+    message.includes("database connection error") ||
+    message.includes("could not query the database") ||
+    code === "PGRST000" ||
+    code === "PGRST002" ||
+    message.includes("fetch failed") ||
+    message.includes("network")
+  );
+}
+
 if (query) {
   try {
     let parseResult;
+    let supabaseAvailable = true;
     
     // Try to call AI parse edge function first
     try {
@@ -38,27 +57,53 @@ if (query) {
       if (parseResponse.ok) {
         parseResult = await parseResponse.json();
       } else {
-        // If edge function fails, use local fallback
-        console.warn(`Edge function unavailable (${parseResponse.status}), using local parser`);
+        // If edge function fails (401, 404, etc.), use local fallback
+        supabaseAvailable = false;
         parseResult = await localAIProvider.parseGiftQuery(query);
       }
     } catch (fetchError) {
       // If fetch fails (network error, function not deployed, etc.), use local fallback
-      console.warn("Edge function not available, using local parser:", fetchError);
+      supabaseAvailable = false;
       parseResult = await localAIProvider.parseGiftQuery(query);
     }
 
     // Map to search request
     const searchRequest = mapParseResultToSearchRequest(parseResult);
 
-    // Search products
-    const searchResponse = await client.searchProducts(searchRequest);
-    products = searchResponse.products;
+    // Search products - handle Supabase connection errors gracefully
+    try {
+      const searchResponse = await client.searchProducts(searchRequest);
+      products = searchResponse.products;
+    } catch (searchError) {
+      if (isSupabaseConnectionError(searchError)) {
+        // If Supabase is not available, show empty results with helpful message
+        products = [];
+        error = "Supabase no está disponible. Por favor, asegúrate de que Docker Desktop esté corriendo y ejecuta 'supabase start' en la terminal.";
+      } else {
+        throw searchError;
+      }
+    }
 
-    // Track search
-    sessionId = await tracker.trackSearch(query, parseResult, products.length);
+    // Track search (don't fail if tracking fails or Supabase is unavailable)
+    if (supabaseAvailable && products.length > 0) {
+      try {
+        sessionId = await tracker.trackSearch(query, parseResult, products.length);
+      } catch (trackError) {
+        // Silently ignore tracking errors - they're not critical
+        if (!isSupabaseConnectionError(trackError)) {
+          console.warn("Failed to track search:", trackError);
+        }
+      }
+    }
   } catch (e) {
-    error = e instanceof Error ? e.message : "Error desconocido";
+    // Provide user-friendly error messages
+    if (isSupabaseConnectionError(e)) {
+      error = "Supabase no está disponible. Por favor, asegúrate de que Docker Desktop esté corriendo y ejecuta 'supabase start' en la terminal.";
+    } else if (e instanceof Error) {
+      error = e.message;
+    } else {
+      error = "Error desconocido al buscar productos";
+    }
     console.error("Search error:", e);
   }
 }
@@ -75,7 +120,19 @@ if (query) {
 
     {error && (
       <div class="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
-        <p class="text-red-800">Error: {error}</p>
+        <p class="text-red-800 font-semibold mb-2">Error al buscar productos</p>
+        <p class="text-red-700 text-sm">{error}</p>
+        {error.includes("Supabase no está disponible") && (
+          <div class="mt-3 text-sm text-red-600">
+            <p class="font-medium mb-1">Para solucionarlo:</p>
+            <ol class="list-decimal list-inside space-y-1 ml-2">
+              <li>Abre Docker Desktop y asegúrate de que esté corriendo</li>
+              <li>Ejecuta en la terminal: <code class="bg-red-100 px-1 rounded">supabase start</code></li>
+              <li>Espera a que los contenedores se inicien</li>
+              <li>Recarga esta página</li>
+            </ol>
+          </div>
+        )}
       </div>
     )}
 
