@@ -85,9 +85,9 @@ export class QregaloClient {
 
     // Category filter via RPC or subquery
     if (request.categories.length > 0) {
-      // Use RPC function for category filtering
-      const { data, error } = await this.supabase.rpc("search_products_with_categories", {
-        search_query: searchTerms,
+      // Try to use RPC function for category filtering (if available)
+      const rpcResult = await this.supabase.rpc("search_products_with_categories", {
+        search_query: searchTerms || null,
         category_names: request.categories,
         price_min: request.price_range?.min ?? null,
         price_max: request.price_range?.max ?? null,
@@ -95,23 +95,103 @@ export class QregaloClient {
         result_offset: offset,
       });
 
-      if (error) throw error;
+      // If RPC function exists and works, use it
+      if (!rpcResult.error && rpcResult.data) {
+        // Get total count using a separate query with same filters
+        let countQuery = this.supabase
+          .from("products")
+          .select("*", { count: "exact", head: true });
 
-      // Get total count separately
-      const { count } = await this.supabase
-        .from("products")
-        .select("*", { count: "exact", head: true })
-        .textSearch("search_text", searchTerms, {
-          type: "websearch",
-          config: "spanish",
-        });
+        if (request.keywords.length > 0) {
+          countQuery = countQuery.textSearch("search_text", searchTerms, {
+            type: "websearch",
+            config: "spanish",
+          });
+        }
 
-      return {
-        products: (data || []) as Product[],
-        total: count || 0,
-        limit,
-        offset,
-      };
+        // Get product IDs that match categories
+        const { data: categoryIds } = await this.supabase
+          .from("categories")
+          .select("id")
+          .in("name", request.categories);
+
+        if (categoryIds && categoryIds.length > 0) {
+          const categoryIdArray = categoryIds.map((c) => c.id);
+          const { data: productCategoryData } = await this.supabase
+            .from("product_categories")
+            .select("product_id")
+            .in("category_id", categoryIdArray);
+
+          if (productCategoryData && productCategoryData.length > 0) {
+            const productIds = productCategoryData.map((pc) => pc.product_id);
+            countQuery = countQuery.in("id", productIds);
+          } else {
+            return {
+              products: [],
+              total: 0,
+              limit,
+              offset,
+            };
+          }
+        }
+
+        // Add price range filter
+        if (request.price_range) {
+          if (request.price_range.min !== null) {
+            countQuery = countQuery.gte("price_usd", request.price_range.min);
+          }
+          if (request.price_range.max !== null) {
+            countQuery = countQuery.lte("price_usd", request.price_range.max);
+          }
+        }
+
+        const { count } = await countQuery;
+
+        return {
+          products: rpcResult.data as Product[],
+          total: count || 0,
+          limit,
+          offset,
+        };
+      }
+
+      // Fallback: Use direct query with category filter
+      // Get category IDs first
+      const { data: categoryIds } = await this.supabase
+        .from("categories")
+        .select("id")
+        .in("name", request.categories);
+
+      if (!categoryIds || categoryIds.length === 0) {
+        // No categories found, return empty result
+        return {
+          products: [],
+          total: 0,
+          limit,
+          offset,
+        };
+      }
+
+      const categoryIdArray = categoryIds.map((c) => c.id);
+
+      // Get product IDs that have these categories
+      const { data: productCategoryData } = await this.supabase
+        .from("product_categories")
+        .select("product_id")
+        .in("category_id", categoryIdArray);
+
+      if (!productCategoryData || productCategoryData.length === 0) {
+        // No products match categories, return empty result
+        return {
+          products: [],
+          total: 0,
+          limit,
+          offset,
+        };
+      }
+
+      const productIds = productCategoryData.map((pc) => pc.product_id);
+      query = query.in("id", productIds);
     }
 
     // Price range filter
