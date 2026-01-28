@@ -58,6 +58,7 @@ The system is built as a monorepo with layered engines:
 ### Prerequisites
 
 - Node.js 18+ and npm
+- Docker Desktop (required for Supabase local development)
 - Supabase CLI (for local development)
 - OpenAI API key (for AI parsing)
 
@@ -74,10 +75,19 @@ npm install
 2. **Set up Supabase**
 
 ```bash
-# Install Supabase CLI if not installed
-npm install -g supabase
+# Install Docker Desktop first (required!)
+# Download from: https://docs.docker.com/desktop
+# Make sure Docker Desktop is running before proceeding
 
-# Start Supabase locally
+# Install Supabase CLI if not installed
+# macOS (recommended):
+brew install supabase/tap/supabase
+
+# Or download from: https://github.com/supabase/cli/releases
+# Or use npx (no global install needed):
+# npx supabase@latest
+
+# Start Supabase locally (requires Docker Desktop to be running)
 supabase start
 
 # Run migrations

@@ -1,13 +1,62 @@
 import { createClient } from "@supabase/supabase-js";
+import { execSync } from "child_process";
 
-const supabaseUrl = process.env.SUPABASE_URL || "http://localhost:54321";
-const supabaseKey =
-  process.env.SUPABASE_SERVICE_ROLE_KEY ||
-  process.env.SUPABASE_ANON_KEY ||
-  "";
+// Get Supabase keys from status command
+function getSupabaseKeys() {
+  try {
+    const statusOutput = execSync("supabase status", {
+      encoding: "utf-8",
+      stdio: ["pipe", "pipe", "ignore"],
+    });
+    
+    // Parse the status output - format: "│ Secret      │ sb_secret_... │"
+    const lines = statusOutput.split("\n");
+    let serviceRoleKey = "";
+    let anonKey = "";
+    let url = "http://127.0.0.1:54321";
+    
+    for (const line of lines) {
+      // Match: │ Secret      │ sb_secret_... │
+      if (line.includes("Secret") && line.includes("│") && line.includes("sb_secret")) {
+        const match = line.match(/sb_secret_\S+/);
+        if (match) serviceRoleKey = match[0];
+      }
+      // Match: │ Publishable │ sb_publishable_... │
+      if (line.includes("Publishable") && line.includes("│") && line.includes("sb_publishable")) {
+        const match = line.match(/sb_publishable_\S+/);
+        if (match) anonKey = match[0];
+      }
+      // Match: │ Project URL    │ http://127.0.0.1:54321              │
+      if (line.includes("Project URL") && line.includes("│")) {
+        const match = line.match(/http:\/\/[^\s│]+/);
+        if (match) url = match[0];
+      }
+    }
+    
+    return {
+      url: url || process.env.SUPABASE_URL || "http://127.0.0.1:54321",
+      serviceRoleKey: serviceRoleKey || process.env.SUPABASE_SERVICE_ROLE_KEY || "",
+      anonKey: anonKey || process.env.SUPABASE_ANON_KEY || "",
+    };
+  } catch (error) {
+    // Fallback to environment variables or defaults
+    return {
+      url: process.env.SUPABASE_URL || "http://127.0.0.1:54321",
+      serviceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY || "",
+      anonKey: process.env.SUPABASE_ANON_KEY || "",
+    };
+  }
+}
+
+const { url: supabaseUrl, serviceRoleKey, anonKey } = getSupabaseKeys();
+// Use service role key for seed (has full permissions), fallback to anon key
+const supabaseKey = serviceRoleKey || anonKey || "";
 
 if (!supabaseKey) {
-  throw new Error("Supabase key is required");
+  console.error("Error: Supabase key is required");
+  console.error("Make sure Supabase is running: supabase start");
+  console.error("Or set SUPABASE_SERVICE_ROLE_KEY or SUPABASE_ANON_KEY environment variable");
+  process.exit(1);
 }
 
 const supabase = createClient(supabaseUrl, supabaseKey);
