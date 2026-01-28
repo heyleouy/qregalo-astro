@@ -1,12 +1,10 @@
--- Enable UUID extension
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
-
 -- Enable pg_trgm for fuzzy text search
 CREATE EXTENSION IF NOT EXISTS pg_trgm;
 
 -- Stores table
+-- Note: gen_random_uuid() is available by default in Supabase (pgcrypto extension)
 CREATE TABLE stores (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name TEXT NOT NULL,
   website_url TEXT NOT NULL,
   category TEXT,
@@ -15,14 +13,14 @@ CREATE TABLE stores (
 
 -- Categories table
 CREATE TABLE categories (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name TEXT NOT NULL UNIQUE,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 -- Products table
 CREATE TABLE products (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   store_id UUID NOT NULL REFERENCES stores(id) ON DELETE CASCADE,
   title TEXT NOT NULL,
   description TEXT NOT NULL,
@@ -48,7 +46,7 @@ CREATE TABLE product_categories (
 
 -- Search sessions table (AB1 analytics)
 CREATE TABLE search_sessions (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   query TEXT NOT NULL,
   ai_json JSONB NOT NULL,
   keywords TEXT[] NOT NULL DEFAULT '{}',
@@ -59,7 +57,7 @@ CREATE TABLE search_sessions (
 
 -- Product clicks table (HOT LEADS - AB1 analytics)
 CREATE TABLE product_clicks (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   session_id UUID NOT NULL REFERENCES search_sessions(id) ON DELETE CASCADE,
   product_id UUID NOT NULL REFERENCES products(id) ON DELETE CASCADE,
   store_id UUID NOT NULL REFERENCES stores(id) ON DELETE CASCADE,
@@ -70,7 +68,7 @@ CREATE TABLE product_clicks (
 
 -- AB2 Prepared tables (schema only, not used in AB1)
 CREATE TABLE product_impressions (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   session_id UUID NOT NULL REFERENCES search_sessions(id) ON DELETE CASCADE,
   product_id UUID NOT NULL REFERENCES products(id) ON DELETE CASCADE,
   position INTEGER NOT NULL,
@@ -78,7 +76,7 @@ CREATE TABLE product_impressions (
 );
 
 CREATE TABLE store_metrics_daily (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   store_id UUID NOT NULL REFERENCES stores(id) ON DELETE CASCADE,
   date DATE NOT NULL,
   searches INTEGER NOT NULL DEFAULT 0,
