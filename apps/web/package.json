@@ -6,12 +6,12 @@
     "node": "20.x"
   },
   "scripts": {
-    "dev": "astro dev",
-    "start": "astro dev",
-    "build": "astro build",
-    "build:vercel": "astro build",
-    "preview": "astro preview",
-    "astro": "astro"
+    "dev": "npx astro dev",
+    "start": "npx astro dev",
+    "build": "npx astro build",
+    "build:vercel": "npx astro build",
+    "preview": "npx astro preview",
+    "astro": "npx astro"
   },
   "dependencies": {
     "@astrojs/react": "^3.6.1",
