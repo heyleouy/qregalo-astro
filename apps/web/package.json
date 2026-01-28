@@ -12,7 +12,7 @@
   "dependencies": {
     "@astrojs/react": "^3.6.1",
     "@astrojs/tailwind": "^5.1.2",
-    "@astrojs/vercel": "^7.8.2",
+    "@astrojs/vercel": "^8.1.4",
     "@qregalo/shared": "*",
     "@qregalo/domain": "*",
     "@qregalo/api-client": "*",
