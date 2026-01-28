@@ -17,5 +17,6 @@ export function mapParseResultToSearchRequest(
 }
 
 export function buildSearchText(keywords: string[]): string {
-  return keywords.join(" & ");
+  // Use OR to match any of the keywords (more flexible)
+  return keywords.join(" | ");
 }

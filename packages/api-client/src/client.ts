@@ -74,8 +74,8 @@ export class QregaloClient {
     const hasKeywords = request.keywords.length > 0;
     
     // Build search query for direct queries (when no categories)
-    // Use AND for precise matching when no categories
-    const searchTerms = request.keywords.join(" & ");
+    // Use OR to match any of the keywords (more flexible)
+    const searchTerms = request.keywords.join(" | ");
 
     // Build base query
     let query = this.supabase
