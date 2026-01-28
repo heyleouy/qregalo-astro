@@ -10,6 +10,7 @@
   "scripts": {
     "dev": "npm run dev --workspace=apps/web",
     "build": "npm run build --workspace=apps/web",
+    "build:vercel": "cd apps/web && npm run build",
     "db:migrate": "supabase migration up",
     "db:seed": "tsx supabase/seed/index.ts",
     "db:reset": "supabase db reset",
