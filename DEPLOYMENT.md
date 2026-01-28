@@ -1,4 +1,4 @@
-# 🚀 Guía de Deployment - QueRegalo Catalog
+# 🚀 Guía de Deployment - Qué Regalo?
 
 ## Resumen: ¿Qué deployar dónde?
 

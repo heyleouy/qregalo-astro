@@ -1,4 +1,4 @@
-# Estimación de Costos Mensuales - QueRegalo Catalog
+# Estimación de Costos Mensuales - Qué Regalo?
 
 ## 📊 Análisis de Uso
 

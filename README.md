@@ -1,4 +1,4 @@
-# QueRegalo Catalog
+# Qué Regalo?
 
 AI-powered gift discovery platform and lead-generation engine for online stores.
 
