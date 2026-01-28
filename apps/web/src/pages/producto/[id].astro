@@ -1,10 +1,10 @@
 ---
-import Layout from "../layouts/Layout.astro";
+import Layout from "@/layouts/Layout.astro";
 import { createQregaloClient } from "@qregalo/api-client";
 import { getEstimatedPriceUSD, getEstimatedPriceUYU } from "@qregalo/domain";
 import { formatPrice } from "@qregalo/shared";
 import { AnalyticsTracker } from "@qregalo/analytics";
-import { getSupabaseConfig } from "../utils/env";
+import { getSupabaseConfig } from "@/utils/env";
 
 const { url: supabaseUrl, anonKey: supabaseKey } = getSupabaseConfig();
 const client = createQregaloClient({ url: supabaseUrl, anonKey: supabaseKey });
